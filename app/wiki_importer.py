@@ -3,10 +3,8 @@ import hashlib
 import requests
 from typing import List
 from app.vectorstore import get_collection
-from dotenv import load_dotenv
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-load_dotenv()
 
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000,

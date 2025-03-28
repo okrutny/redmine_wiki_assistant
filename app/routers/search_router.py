@@ -1,3 +1,5 @@
+import os
+
 from fastapi import APIRouter, Request
 from langchain.chains.retrieval_qa.base import RetrievalQA
 from langchain_community.chat_models import ChatOpenAI
@@ -9,6 +11,8 @@ router = APIRouter()
 llm = ChatOpenAI(temperature=0.2, model="gpt-4o-2024-11-20")
 
 retriever = get_retriever()
+
+WIKI_BASE = os.getenv("REDMINE_WIKI_BASE_URL", "")
 
 qa = RetrievalQA.from_chain_type(
     llm=llm,
@@ -32,7 +36,8 @@ async def search_text(request: Request):
     formatted_sources = [
         {
             "source": doc.metadata.get("page"),
-            "chunk_id": doc.metadata.get("chunk_id")
+            "chunk_id": doc.metadata.get("chunk_id"),
+            "url": f"{WIKI_BASE}{doc.metadata.get('page').replace(' ', '_')}"
         } for doc in sources
     ]
 

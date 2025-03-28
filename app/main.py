@@ -3,7 +3,7 @@ import uuid
 
 from app.vectorstore import get_collection
 from app.wiki_importer import WikiImporter
-from routers import search_router
+from app.routers import search_router
 
 app = FastAPI()
 app.include_router(search_router.router)

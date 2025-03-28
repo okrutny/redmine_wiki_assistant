@@ -1,6 +1,6 @@
 import os
 from functools import lru_cache
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_community.embeddings import OpenAIEmbeddings
 import chromadb
 from langchain_community.vectorstores import Chroma
 
