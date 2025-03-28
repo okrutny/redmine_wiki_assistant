@@ -1,3 +1,6 @@
+chroma_store/*
+!chroma_store/.gitkeep
+.idea/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
