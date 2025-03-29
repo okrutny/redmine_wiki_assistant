@@ -1,5 +1,8 @@
 FROM python:3.11-slim
 
+ARG ENV=dev
+ENV ENV=${ENV}
+
 ARG UID=1001
 ARG GID=1001
 
@@ -8,8 +11,13 @@ RUN addgroup --gid $GID appgroup && \
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
+# Kopiuj oba requirements
+COPY requirements.txt requirements.prod.txt ./
+
+# Warunkowa instalacja zależnie od ENV
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt && \
+    if [ "$ENV" = "prod" ]; then pip install -r requirements.prod.txt; fi
 
 COPY . .
 

@@ -2,8 +2,13 @@ version: "3.9"
 
 services:
   api:
-    build: .
-    env_file: .env
+    build:
+      context: .
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    env_file:
+      - .env
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`${TRAEFIK_DOMAIN}`)"
@@ -12,19 +17,20 @@ services:
       - "traefik.http.services.api.loadbalancer.server.port=8000"
     expose:
       - "8000"
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      - ./chroma_store:/app/chroma_store
     depends_on:
       - traefik
 
   traefik:
-    image: traefik:v3.0
-    command:
-      - --configFile=/etc/traefik/traefik.yml
+    build:
+      context: ./traefik
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./letsencrypt:/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock:ro
     env_file:
-      - .env.traefik
+      - .env

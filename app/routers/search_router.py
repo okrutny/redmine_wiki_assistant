@@ -4,7 +4,7 @@ from fastapi import APIRouter, Request
 from langchain.chains.retrieval_qa.base import RetrievalQA
 from langchain_community.chat_models import ChatOpenAI
 
-from vectorstore import get_retriever
+from app.vectorstore import get_retriever
 
 router = APIRouter()
 
