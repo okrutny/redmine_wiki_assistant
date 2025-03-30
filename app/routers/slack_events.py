@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
+from app.logging_config import logger
 from app.routers.search_router import qa
 
 router = APIRouter()
@@ -12,6 +13,7 @@ router = APIRouter()
 @router.post("/slack/events")
 async def handle_slack_events(request: Request):
     payload = await request.json()
+    logger.info(f"Received Slack event: {payload}")
 
     if payload.get("type") == "url_verification":
         return JSONResponse(content={"challenge": payload["challenge"]})
@@ -23,6 +25,7 @@ async def handle_slack_events(request: Request):
             channel = event.get("channel")
 
             question = text.split('>', 1)[-1].strip()
+
             answer = qa({"query": question})
 
             client = WebClient(token=os.getenv("SLACK_BOT_TOKEN"))
@@ -32,6 +35,6 @@ async def handle_slack_events(request: Request):
                     text=f"*📥 {question}*\n\n{answer}"
                 )
             except SlackApiError as e:
-                print(f"Slack error: {e.response['error']}")
+                logger.error(f"Slack error: {e.response['error']}")
 
     return JSONResponse(content={"ok": True})
