@@ -8,3 +8,4 @@ langchain-community==0.3.20
 tiktoken==0.9.0
 starlette==0.46.1
 slack-sdk>=3.21.3
+python-multipart

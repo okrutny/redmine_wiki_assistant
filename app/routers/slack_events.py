@@ -12,6 +12,7 @@ router = APIRouter()
 
 @router.post("/slack/events")
 async def handle_slack_events(request: Request):
+    logger.debug(f"Received Slack event: {request}")
     payload = await request.json()
     logger.info(f"Received Slack event: {payload}")
 
@@ -25,14 +26,23 @@ async def handle_slack_events(request: Request):
             channel = event.get("channel")
 
             question = text.split('>', 1)[-1].strip()
+            logger.info(f"Slack mention → question: {question}")
 
-            answer = qa({"query": question})
+            result = qa({"query": question})
+            answer = result["result"]
+            sources = result.get("source_documents", [])
 
-            client = WebClient(token=os.getenv("SLACK_BOT_TOKEN"))
+            formatted_sources = [
+                f"<{os.getenv('REDMINE_WIKI_BASE_URL')}{doc.metadata.get('page').replace(' ', '_')}|{doc.metadata.get('page')} (chunk {doc.metadata.get('chunk_id')})>"
+                for doc in sources
+            ]
+            sources_block = "\n".join(formatted_sources) if formatted_sources else "_sources_missing_"
+
+            slack = WebClient(token=os.getenv("SLACK_BOT_TOKEN"))
             try:
-                client.chat_postMessage(
+                slack.chat_postMessage(
                     channel=channel,
-                    text=f"*📥 {question}*\n\n{answer}"
+                    text=f"*📥 {question}*\n\n{answer}\n\n📚 *Sources:*\n{sources_block}"
                 )
             except SlackApiError as e:
                 logger.error(f"Slack error: {e.response['error']}")
