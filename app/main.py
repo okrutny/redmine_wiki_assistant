@@ -3,11 +3,12 @@ import uuid
 
 from app.vectorstore import get_collection
 from app.wiki_importer import WikiImporter
-from app.routers import search_router
+from app.routers import search_router, slack_events
 from app.middleware import SlackSignatureMiddleware
 
 app = FastAPI()
 app.include_router(search_router.router)
+app.include_router(slack_events.router)
 app.add_middleware(SlackSignatureMiddleware)
 
 
