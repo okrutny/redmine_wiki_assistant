@@ -7,12 +7,12 @@ from slack_sdk.errors import SlackApiError
 
 from app.logging_config import logger
 from app.routers.search_router import qa
+from app.state import seen_slack_events
 
 router = APIRouter()
 
 @router.post("/slack/events")
 async def handle_slack_events(request: Request):
-    logger.debug(f"Received Slack event: {request}")
     payload = await request.json()
     logger.info(f"Received Slack event: {payload}")
 
@@ -21,11 +21,19 @@ async def handle_slack_events(request: Request):
 
     if payload.get("type") == "event_callback":
         event = payload.get("event", {})
+        event_id = payload.get("event_id")
+
+        # 🔁 Deduplication
+        if event_id in seen_slack_events:
+            logger.info(f"Duplicate Slack event ignored: {event_id}")
+            return JSONResponse(content={"ok": True})
+        seen_slack_events.add(event_id)
+
         if event.get("type") == "app_mention":
             text = event.get("text")
             channel = event.get("channel")
-
             question = text.split('>', 1)[-1].strip()
+
             logger.info(f"Slack mention → question: {question}")
 
             result = qa({"query": question})
