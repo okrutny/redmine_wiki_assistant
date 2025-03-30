@@ -4,7 +4,7 @@ set -e  # exit on error
 if [ "$ENV" = "prod" ]; then
   echo "Starting in production mode (gunicorn)..."
   exec gunicorn app.main:app \
-    --workers 3 \
+    --workers 1 \
     --worker-class uvicorn.workers.UvicornWorker \
     --bind 0.0.0.0:8000
 else
