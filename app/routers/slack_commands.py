@@ -9,7 +9,7 @@ from app.wiki_importer import WikiImporter
 router = APIRouter()
 
 
-@app.post("/slack/commands/reimport")
+@router.post("/slack/commands/reimport")
 async def trigger_import(request: Request, background_tasks: BackgroundTasks):
     payload = await request.json()
     logger.info(f"Received Slack command: {payload}")
