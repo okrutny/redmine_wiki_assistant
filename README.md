@@ -1,5 +1,6 @@
 # redmine_wiki_assistant
 
+# all commands from project's root directory
 ## prepare project files and install docker
 cp .env.example .env
 chmod +x setup.sh entrypoint.sh traefik/entrypoint.sh
