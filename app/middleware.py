@@ -10,6 +10,7 @@ from starlette.responses import JSONResponse
 
 class SlackSignatureMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        print("🚨 Slack middleware active")
         if os.getenv("SKIP_SLACK_VERIFY", "").lower() == "true":
             print("SKIP_SLACK_VERIFY enabled — skipping signature check")
             return await call_next(request)
