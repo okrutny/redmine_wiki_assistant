@@ -41,9 +41,10 @@ async def handle_slack_events(request: Request):
             sources = result.get("source_documents", [])
 
             formatted_sources = [
-                f"<{os.getenv('REDMINE_WIKI_BASE_URL')}{doc.metadata.get('page').replace(' ', '_')}|{doc.metadata.get('page')} (chunk {doc.metadata.get('chunk_id')})>"
+                f"<{os.getenv('REDMINE_WIKI_BASE_URL')}{doc.metadata.get('page').replace(' ', '_')}|{doc.metadata.get('path')} (chunk {doc.metadata.get('chunk_id')})>"
                 for doc in sources
             ]
+
             sources_block = "\n".join(formatted_sources) if formatted_sources else "_sources_missing_"
 
             slack = WebClient(token=os.getenv("SLACK_BOT_TOKEN"))

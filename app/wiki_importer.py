@@ -2,6 +2,8 @@ import os
 import hashlib
 import requests
 from typing import List
+
+from app.utils import send_log_to_slack
 from app.vectorstore import get_collection
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
@@ -21,6 +23,22 @@ class WikiImporter:
         self.project = os.getenv("REDMINE_PROJECT")
         self.headers = {"X-Redmine-API-Key": self.api_key}
         self.collection = get_collection()
+
+    @staticmethod
+    def build_page_lookup(wiki_pages):
+        return {page["title"]: page for page in wiki_pages}
+
+    @staticmethod
+    def build_breadcrumbs(title: str, page_lookup: dict) -> str:
+        breadcrumbs = []
+        while title:
+            page = page_lookup.get(title)
+            if not page:
+                break
+            breadcrumbs.insert(0, title)
+            parent = page.get("parent", {}).get("title")
+            title = parent
+        return " / ".join(breadcrumbs)
 
     def get_wiki_index(self) -> List[dict]:
         r = requests.get(
@@ -45,10 +63,14 @@ class WikiImporter:
         return text_splitter.split_text(text)
 
     def run(self):
+        send_log_to_slack("📥 Wiki import has started.")
         wiki_pages = self.get_wiki_index()
         print(f"Found {len(wiki_pages)} wiki pages")
+        page_lookup = self.build_page_lookup(wiki_pages)
 
         for page in wiki_pages:
+            title = page["title"]
+            path = self.build_breadcrumbs(title, page_lookup)
             title = page["title"]
             updated = page["updated_on"]
 
@@ -75,11 +97,14 @@ class WikiImporter:
                     "page": title,
                     "chunk_id": i,
                     "hash": chunk_hash,
-                    "updated_at": updated
+                    "updated_at": updated,
+                    "path": path
                 }
 
+                chunk_with_path = f"[{path}]\n{chunk}"
+
                 self.collection.add(
-                    documents=[chunk],
+                    documents=[chunk_with_path],
                     ids=[doc_id],
                     metadatas=[metadata]
                 )
@@ -87,3 +112,5 @@ class WikiImporter:
             print(f"Imported {len(chunks)} chunks for page: {title}")
 
         print(f"Finished importing")
+        send_log_to_slack("✅ Wiki import has completed.")
+
