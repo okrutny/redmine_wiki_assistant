@@ -68,10 +68,13 @@ class WikiImporter:
         print(f"Found {len(wiki_pages)} wiki pages")
         page_lookup = self.build_page_lookup(wiki_pages)
 
+        existing_ids = set(self.collection.get(include=["ids"])["ids"])
+
+        imported_ids = set()
+
         for page in wiki_pages:
             title = page["title"]
             path = self.build_breadcrumbs(title, page_lookup)
-            title = page["title"]
             updated = page["updated_on"]
 
             print(f"Importing page: {title}")
@@ -82,16 +85,20 @@ class WikiImporter:
             for i, chunk in enumerate(chunks):
                 chunk_hash = self.hash_chunk(chunk)
                 doc_id = f"{title}_{i}"
+                imported_ids.add(doc_id)
 
-                existing = self.collection.get(
-                    ids=[doc_id], include=["metadatas"]
-                )
+                existing = self.collection.get(ids=[doc_id], include=["metadatas"])
                 if existing["ids"]:
                     old_hash = existing["metadatas"][0].get("hash")
                     if old_hash == chunk_hash:
                         continue  # no change
                     else:
+                        print(f"📝 Updated chunk: {doc_id}")
+                        send_log_to_slack(f"📝 Updated chunk: {doc_id}")
                         self.collection.delete(ids=[doc_id])
+                else:
+                    print(f"➕ New chunk: {doc_id}")
+                    send_log_to_slack(f"➕ New chunk: {doc_id}")
 
                 metadata = {
                     "page": title,
@@ -109,8 +116,17 @@ class WikiImporter:
                     metadatas=[metadata]
                 )
 
-            print(f"Imported {len(chunks)} chunks for page: {title}")
+            print(f"✅ Imported {len(chunks)} chunks for page: {title}")
 
-        print(f"Finished importing")
+        # Find and delete removed chunks
+        deleted_ids = existing_ids - imported_ids
+        if deleted_ids:
+            for doc_id in deleted_ids:
+                print(f"❌ Deleted chunk: {doc_id}")
+                send_log_to_slack(f"❌ Deleted chunk: {doc_id}")
+            self.collection.delete(ids=list(deleted_ids))
+
+        print(f"🎉 Finished importing")
         send_log_to_slack("✅ Wiki import has completed.")
+
 
