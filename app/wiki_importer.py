@@ -60,7 +60,7 @@ class WikiImporter:
         return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
     @staticmethod
-    def split_chunks(self, text: str) -> list[str]:
+    def split_chunks(text: str) -> list[str]:
         return text_splitter.split_text(text)
 
     def fetch_existing_ids(self):
@@ -69,7 +69,7 @@ class WikiImporter:
         return existing_ids
 
     @staticmethod
-    def get_chunk_with_path(self, chunk: str, path: str) -> str:
+    def get_chunk_with_path(chunk: str, path: str) -> str:
         return f"[{path}]\n{chunk}"
 
     def run(self):
