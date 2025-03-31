@@ -40,9 +40,15 @@ async def handle_slack_events(request: Request):
             answer = result["result"]
             sources = result.get("source_documents", [])
 
+            # ⭐ Sort by score and filter by confidence threshold (e.g. > 0.85)
+            filtered_sources = [
+                doc for doc in sources
+                if doc.metadata.get("score", 1.0) > 0.85
+            ]
+
             formatted_sources = [
                 f"<{os.getenv('REDMINE_WIKI_BASE_URL')}{doc.metadata.get('page').replace(' ', '_')}|{doc.metadata.get('path')} (chunk {doc.metadata.get('chunk_id')})>"
-                for doc in sources
+                for doc in filtered_sources
             ]
 
             sources_block = "\n".join(formatted_sources) if formatted_sources else "_sources_missing_"
