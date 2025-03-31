@@ -6,8 +6,8 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
 from app.logging_config import logger
-from app.routers.search_router import qa
 from app.state import seen_slack_events
+from app.utils import get_qa_chain
 
 router = APIRouter()
 
@@ -36,19 +36,13 @@ async def handle_slack_events(request: Request):
 
             logger.info(f"Slack mention → question: {question}")
 
-            result = qa({"query": question})
+            result = get_qa_chain()({"query": question})
             answer = result["result"]
             sources = result.get("source_documents", [])
 
-            # ⭐ Sort by score and filter by confidence threshold (e.g. > 0.85)
-            filtered_sources = [
-                doc for doc in sources
-                if doc.metadata.get("score", 1.0) > 0.85
-            ]
-
             formatted_sources = [
                 f"<{os.getenv('REDMINE_WIKI_BASE_URL')}{doc.metadata.get('page').replace(' ', '_')}|{doc.metadata.get('path')} (chunk {doc.metadata.get('chunk_id')})>"
-                for doc in filtered_sources
+                for doc in sources
             ]
 
             sources_block = "\n".join(formatted_sources) if formatted_sources else "_sources_missing_"

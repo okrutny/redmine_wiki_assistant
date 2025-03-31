@@ -2,7 +2,6 @@ import os
 from functools import lru_cache
 from langchain_community.embeddings import OpenAIEmbeddings
 import chromadb
-from langchain_community.vectorstores import Chroma
 
 
 class CustomOpenAIEmbeddings(OpenAIEmbeddings):
@@ -27,13 +26,3 @@ def get_collection():
             openai_api_key=os.getenv("OPENAI_API_KEY")
         )
     )
-
-@lru_cache
-def get_retriever():
-    return Chroma(
-        collection_name="wiki",
-        embedding_function=CustomOpenAIEmbeddings(
-            openai_api_key=os.getenv("OPENAI_API_KEY")
-        ),
-        persist_directory="chroma_store"
-    ).as_retriever()

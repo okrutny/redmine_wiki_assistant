@@ -1,24 +1,12 @@
 import os
 
 from fastapi import APIRouter, Request
-from langchain.chains.retrieval_qa.base import RetrievalQA
-from langchain_community.chat_models import ChatOpenAI
 
-from app.vectorstore import get_retriever
+from app.utils import get_qa_chain
 
 router = APIRouter()
 
-llm = ChatOpenAI(temperature=0.2, model="gpt-4o-2024-11-20")
-
-retriever = get_retriever()
-
 WIKI_BASE = os.getenv("REDMINE_WIKI_BASE_URL", "")
-
-qa = RetrievalQA.from_chain_type(
-    llm=llm,
-    retriever=retriever,
-    return_source_documents=True
-)
 
 
 @router.post("/search")
@@ -29,7 +17,7 @@ async def search_text(request: Request):
     if not query:
         return {"error": "Missing 'query' parameter"}
 
-    result = qa({"query": query})
+    result = get_qa_chain()({"query": query})
     answer = result["result"]
     sources = result.get("source_documents", [])
 
