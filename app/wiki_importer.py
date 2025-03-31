@@ -62,13 +62,18 @@ class WikiImporter:
     def split_chunks(self, text: str) -> list[str]:
         return text_splitter.split_text(text)
 
+    def fetch_existing_ids(self):
+        existing_chunks = self.collection.get()
+        existing_ids = set(existing_chunks.get("ids", []))
+        return existing_ids
+
     def run(self):
         send_log_to_slack("📥 Wiki import has started.")
         wiki_pages = self.get_wiki_index()
         print(f"Found {len(wiki_pages)} wiki pages")
         page_lookup = self.build_page_lookup(wiki_pages)
 
-        existing_ids = set(self.collection.get(include=["ids"])["ids"])
+        existing_ids = self.fetch_existing_ids()
 
         imported_ids = set()
 
