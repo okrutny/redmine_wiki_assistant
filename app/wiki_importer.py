@@ -59,6 +59,7 @@ class WikiImporter:
     def hash_chunk(self, text: str) -> str:
         return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
+    @staticmethod
     def split_chunks(self, text: str) -> list[str]:
         return text_splitter.split_text(text)
 
@@ -66,6 +67,10 @@ class WikiImporter:
         existing_chunks = self.collection.get()
         existing_ids = set(existing_chunks.get("ids", []))
         return existing_ids
+
+    @staticmethod
+    def get_chunk_with_path(self, chunk: str, path: str) -> str:
+        return f"[{path}]\n{chunk}"
 
     def run(self):
         send_log_to_slack("📥 Wiki import has started.")
@@ -88,7 +93,8 @@ class WikiImporter:
             chunks = self.split_chunks(content)
 
             for i, chunk in enumerate(chunks):
-                chunk_hash = self.hash_chunk(chunk)
+                chunk_with_path = self.get_chunk_with_path(chunk, path)
+                chunk_hash = self.hash_chunk(chunk_with_path)
                 doc_id = f"{title}_{i}"
                 imported_ids.add(doc_id)
 
@@ -112,8 +118,6 @@ class WikiImporter:
                     "updated_at": updated,
                     "path": path
                 }
-
-                chunk_with_path = f"[{path}]\n{chunk}"
 
                 self.collection.add(
                     documents=[chunk_with_path],
