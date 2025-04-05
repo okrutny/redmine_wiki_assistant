@@ -50,11 +50,37 @@ class WikiImporter:
 
     def get_wiki_page(self, title: str) -> dict:
         r = requests.get(
-            f"{self.api_url}/projects/{self.project}/wiki/{title}.json",
+            f"{self.api_url}/projects/{self.project}/wiki/{title}.json?include=attachments",
             headers=self.headers
         )
         r.raise_for_status()
         return r.json().get("wiki_page", {})
+
+    @staticmethod
+    def download_text_attachments(wiki_page: dict, headers: dict):
+        attachments = wiki_page.get("attachments", [])
+        if not attachments:
+            print("Brak załączników do pobrania.")
+            return
+
+        text_attachments = {}
+
+        for attachment in attachments:
+            filename = attachment.get("filename")
+            content_url = attachment.get("content_url")
+            if not filename or not content_url:
+                continue
+
+            # Sprawdzamy, czy rozszerzenie wskazuje na plik tekstowy
+            if filename.lower().endswith((".txt", ".md", ".csv", ".json", ".xml", ".html", ".log")):
+                print(f"Pobieram tekstowy załącznik {filename} z {content_url}")
+                response = requests.get(content_url, headers=headers)
+                response.raise_for_status()
+                text_attachments[filename] = response.text
+            else:
+                print(f"Pomiń załącznik {filename} - nie jest tekstowy.")
+
+        return text_attachments
 
     def hash_chunk(self, text: str) -> str:
         return hashlib.sha256(text.encode("utf-8")).hexdigest()
@@ -71,6 +97,22 @@ class WikiImporter:
     @staticmethod
     def get_chunk_with_path(chunk: str, path: str) -> str:
         return f"[{path}]\n{chunk}"
+
+    def add_to_collection(self, title: str, index: int, chunk_hash: str, updated: str, path: str,
+                          chunk_with_path: str, doc_id: str):
+        metadata = {
+            "page": title,
+            "chunk_id": index,
+            "hash": chunk_hash,
+            "updated_at": updated,
+            "path": path
+        }
+
+        self.collection.add(
+            documents=[chunk_with_path],
+            ids=[doc_id],
+            metadatas=[metadata]
+        )
 
     def run(self):
         send_log_to_slack("📥 Wiki import has started.")
@@ -90,6 +132,7 @@ class WikiImporter:
             print(f"Importing page: {title}")
             page_data = self.get_wiki_page(title)
             content = page_data.get("text", "")
+
             chunks = self.split_chunks(content)
 
             for i, chunk in enumerate(chunks):
@@ -102,28 +145,44 @@ class WikiImporter:
                 if existing["ids"]:
                     old_hash = existing["metadatas"][0].get("hash")
                     if old_hash == chunk_hash:
-                        continue  # no change
+                        pass
                     else:
                         print(f"📝 Updated chunk: {doc_id}")
                         send_log_to_slack(f"📝 Updated chunk: {doc_id}")
                         self.collection.delete(ids=[doc_id])
+                        self.add_to_collection(title, i, chunk_hash, updated, path, chunk_with_path, doc_id)
                 else:
                     print(f"➕ New chunk: {doc_id}")
                     send_log_to_slack(f"➕ New chunk: {doc_id}")
+                    self.add_to_collection(title, i, chunk_hash, updated, path, chunk_with_path, doc_id)
 
-                metadata = {
-                    "page": title,
-                    "chunk_id": i,
-                    "hash": chunk_hash,
-                    "updated_at": updated,
-                    "path": path
-                }
-
-                self.collection.add(
-                    documents=[chunk_with_path],
-                    ids=[doc_id],
-                    metadatas=[metadata]
-                )
+                # Pobieramy załączniki tekstowe
+                text_attachments = self.download_text_attachments(page_data, self.headers)
+                for filename, text_content in text_attachments.items():
+                    attachment_chunks = self.split_chunks(text_content)
+                    bypass = True
+                    if bypass:
+                        continue
+                    for j, att_chunk in enumerate(attachment_chunks):
+                        doc_id = f"{title}_attachment_{filename}_{j}"
+                        existing_attachment_ids = self.collection.get(ids=[doc_id], include=["metadatas"])
+                        if existing_attachment_ids["ids"]:
+                            continue
+                        imported_ids.add(doc_id)
+                        metadata = {
+                            "page": title,
+                            "attachment": filename,
+                            "chunk_id": j,
+                            "updated_at": updated,
+                            "path": path
+                        }
+                        print(f"➕ Dodaję fragment załącznika: {doc_id}")
+                        send_log_to_slack(f"➕ Dodaję fragment załącznika: {doc_id}")
+                        self.collection.add(
+                            documents=[att_chunk],
+                            ids=[doc_id],
+                            metadatas=[metadata]
+                        )
 
             print(f"✅ Imported {len(chunks)} chunks for page: {title}")
 

@@ -22,7 +22,9 @@ def get_base_retriever():
         ),
         persist_directory="chroma_store"
     )
-    return chroma.as_retriever()
+    retriever = chroma.as_retriever()
+    retriever.search_kwargs = {"k": 10}
+    return retriever
 
 
 @lru_cache
@@ -55,6 +57,7 @@ def get_qa_chain():
 
 
 def send_log_to_slack(message: str):
+    return
     slack = WebClient(token=os.getenv("SLACK_BOT_TOKEN"))
     slack.chat_postMessage(
         channel="#gawel-log",
