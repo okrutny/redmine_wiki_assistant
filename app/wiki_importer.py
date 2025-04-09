@@ -59,26 +59,26 @@ class WikiImporter:
     @staticmethod
     def download_text_attachments(wiki_page: dict, headers: dict):
         attachments = wiki_page.get("attachments", [])
-        if not attachments:
-            print("Brak załączników do pobrania.")
-            return
 
         text_attachments = {}
 
-        for attachment in attachments:
-            filename = attachment.get("filename")
-            content_url = attachment.get("content_url")
-            if not filename or not content_url:
-                continue
+        if not attachments:
+            print("Brak załączników do pobrania.")
+        else:
+            for attachment in attachments:
+                filename = attachment.get("filename")
+                content_url = attachment.get("content_url")
+                if not filename or not content_url:
+                    continue
 
-            # Sprawdzamy, czy rozszerzenie wskazuje na plik tekstowy
-            if filename.lower().endswith((".txt", ".md", ".csv", ".json", ".xml", ".html", ".log")):
-                print(f"Pobieram tekstowy załącznik {filename} z {content_url}")
-                response = requests.get(content_url, headers=headers)
-                response.raise_for_status()
-                text_attachments[filename] = response.text
-            else:
-                print(f"Pomiń załącznik {filename} - nie jest tekstowy.")
+                # Sprawdzamy, czy rozszerzenie wskazuje na plik tekstowy
+                if filename.lower().endswith((".txt", ".md", ".csv", ".json", ".xml", ".html", ".log")):
+                    print(f"Pobieram tekstowy załącznik {filename} z {content_url}")
+                    response = requests.get(content_url, headers=headers)
+                    response.raise_for_status()
+                    text_attachments[filename] = response.text
+                else:
+                    print(f"Pomiń załącznik {filename} - nie jest tekstowy.")
 
         return text_attachments
 

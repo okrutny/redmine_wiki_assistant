@@ -6,6 +6,9 @@ from fastapi import APIRouter, Request
 from app.codebase_parser import search_functions_with_keywords, extract_and_save_model_data
 from app.keywords_extraction import extract_vars_chain, match_question_to_code_chain, o3_mini_llm
 from app.utils import send_log_to_slack
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -163,8 +166,11 @@ def run_qa_pipeline(question):
 
 @router.post("/slack/commands/search_codebase")
 async def search_text(request: Request):
-    data = await request.json()
-    query = data.get("query")
+    form = await request.form()
+    payload = dict(form)
+    logger.info(f"Received Slack command: {payload}")
+
+    query = payload.get('text')
 
     if not query:
         return {"error": "Missing 'query' parameter"}
