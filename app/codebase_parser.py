@@ -52,7 +52,7 @@ def extract_and_save_model_data():
     # Check if the model data files already exist
     if not os.path.exists(models_file_path) or not os.path.exists(others_file_path):
         # Extract model information
-        send_log_to_slack(f"\n[1] Building codebase data")
+        send_log_to_slack(f"Building codebase data")
         classes = extract_models_and_functions_from_directory(file_name="models.py")
         model_names = create_names_from_classes(classes)
 
