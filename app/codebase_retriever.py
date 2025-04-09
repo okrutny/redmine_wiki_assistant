@@ -36,6 +36,8 @@ class CodebaseRetriever:
 
         matching_names = matching_models + matching_other + variables
 
+        matching_names = [name.split('.')[1] if '.' in name else name for name in matching_names]
+
         send_log_to_slack(f"Found following fields and methods in codebase: {', '.join(matching_names)}")
 
         send_log_to_slack(f"Searching for code...")
