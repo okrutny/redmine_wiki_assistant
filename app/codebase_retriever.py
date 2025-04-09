@@ -25,7 +25,7 @@ class CodebaseRetriever:
         matching_other = []
 
         if not variables:
-            send_log_to_slack("Variables not found")
+            send_log_to_slack("Variables not found, searching for keywords in database terms")
             matching_models = ast.literal_eval(match_question_to_code_chain.run(codebase=", ".join(model_names),
                                                                                 question=self.question).strip())
 

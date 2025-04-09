@@ -3,6 +3,7 @@ import json
 import os
 import ast
 import re
+import random
 
 import dotenv
 
@@ -138,10 +139,11 @@ def create_names_from_classes(class_info:dict):
 def search_functions_with_keywords(keywords, code_dir=CODE_DIR):
     matches = []
 
+    print(f"processing code_dir: {code_dir}")
     for root, _, files in os.walk(code_dir):
         for file in files:
-
             full_path = os.path.join(root, file)
+            print(f"processing full_path: {full_path}")
             try:
                 with open(full_path, "r", encoding="utf-8") as f:
                     source = f.read()

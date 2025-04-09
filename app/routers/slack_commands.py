@@ -41,3 +41,5 @@ async def search_text(request: Request, background_tasks: BackgroundTasks):
         return {"error": "Missing 'query' parameter"}
 
     background_tasks.add_task(CodebaseRetriever(query).run)
+
+    return JSONResponse(content={"status": "ok"})
