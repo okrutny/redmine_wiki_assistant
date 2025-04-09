@@ -57,7 +57,6 @@ def get_qa_chain():
 
 
 def send_log_to_slack(message: str):
-    return
     slack = WebClient(token=os.getenv("SLACK_BOT_TOKEN"))
     slack.chat_postMessage(
         channel="#gawel-log",

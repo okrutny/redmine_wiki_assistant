@@ -160,9 +160,6 @@ class WikiImporter:
                 text_attachments = self.download_text_attachments(page_data, self.headers)
                 for filename, text_content in text_attachments.items():
                     attachment_chunks = self.split_chunks(text_content)
-                    bypass = True
-                    if bypass:
-                        continue
                     for j, att_chunk in enumerate(attachment_chunks):
                         doc_id = f"{title}_attachment_{filename}_{j}"
                         existing_attachment_ids = self.collection.get(ids=[doc_id], include=["metadatas"])
