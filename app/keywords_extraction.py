@@ -41,7 +41,9 @@ match_question_to_code_chain = LLMChain(llm=o3_mini_llm, prompt=match_question_t
 
 # === Step 0: Extract provided code variables or definitions ===
 extract_vars_prompt = PromptTemplate.from_template("""
-Given the following question, extract the provided code variables or definitions. Return them as a python list of strings.
+Given the following question, extract the provided code variables or definitions. 
+Every string which contains . or _ is a variable.
+ Return them as a python list of strings.
 If variables are not provided, return an empty list.    
 
 Question:
